@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS — Access Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00f5ff;
+  --green: #39ff14;
+  --dark: #020408;
+  --dark2: #050d14;
+  --dark3: #0a1628;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--dark);
+  color: #c8e6f0;
+  font-family: 'Sora', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#bg-canvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; opacity:0.5; }
+body::after {
+  content:'';
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+  pointer-events:none; z-index:1;
+}
+
+.auth-container {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 460px;
+  padding: 20px;
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.logo-text {
+  font-family: 'Orbitron', monospace;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--cyan);
+  letter-spacing: 8px;
+  text-shadow: 0 0 30px rgba(0,245,255,0.6);
+}
+.logo-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 4px;
+  color: rgba(0,245,255,0.4);
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+.auth-box {
+  background: rgba(5,13,20,0.95);
+  border: 1px solid rgba(0,245,255,0.2);
+  padding: 48px 40px;
+  position: relative;
+  overflow: hidden;
+}
+.auth-box::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+}
+
+.tab-switcher {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 36px;
+  background: rgba(0,245,255,0.04);
+  padding: 4px;
+  border: 1px solid rgba(0,245,255,0.1);
+}
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  color: rgba(200,230,240,0.5);
+  font-family: 'Orbitron', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  background: var(--cyan);
+  color: var(--dark);
+  font-weight: 700;
+}
+
+.form-group { margin-bottom: 20px; }
+.form-label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(0,245,255,0.03);
+  border: 1px solid rgba(0,245,255,0.15);
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s;
+}
+.form-input:focus {
+  border-color: var(--cyan);
+  background: rgba(0,245,255,0.06);
+  box-shadow: 0 0 20px rgba(0,245,255,0.1);
+}
+.form-input::placeholder { color: rgba(200,230,240,0.25); }
+
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--cyan), #0088ff);
+  border: none;
+  color: var(--dark);
+  font-family: 'Orbitron', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+}
+.submit-btn:hover { box-shadow: 0 0 40px rgba(0,245,255,0.5); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error-msg {
+  background: rgba(255,50,50,0.1);
+  border: 1px solid rgba(255,50,50,0.3);
+  color: #ff6b6b;
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  margin-top: 16px;
+  display: none;
+}
+.success-msg {
+  background: rgba(57,255,20,0.08);
+  border: 1px solid rgba(57,255,20,0.3);
+  color: var(--green);
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  margin-top: 16px;
+  display: none;
+}
+
+.back-link {
+  text-align: center;
+  margin-top: 28px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: rgba(200,230,240,0.3);
+}
+.back-link a { color: var(--cyan); text-decoration: none; }
+.back-link a:hover { text-decoration: underline; }
+
+.loading-bar {
+  display: none;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--green), var(--cyan));
+  background-size: 200% 100%;
+  animation: slide 1s linear infinite;
+  margin-top: 12px;
+}
+@keyframes slide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.corner { position:absolute; width:16px; height:16px; border-color: var(--cyan); border-style: solid; opacity:0.5; }
+.corner-tl { top:8px; left:8px; border-width:1px 0 0 1px; }
+.corner-tr { top:8px; right:8px; border-width:1px 1px 0 0; }
+.corner-bl { bottom:8px; left:8px; border-width:0 0 1px 1px; }
+.corner-br { bottom:8px; right:8px; border-width:0 1px 1px 0; }
+
+.form-panel { display: none; }
+.form-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="auth-container">
+  <div class="logo">
+    <div class="logo-text">NEXUS</div>
+    <div class="logo-sub">// ACCESS TERMINAL</div>
+  </div>
+
+  <div class="auth-box">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="tab-switcher">
+      <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">LOGIN</button>
+      <button class="tab-btn" id="registerTab" onclick="switchTab('register')">REGISTER</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div class="form-panel active" id="loginPanel">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="loginEmail" class="form-input" placeholder="agent@nexus.ai" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" />
+      </div>
+      <button class="submit-btn" id="loginBtn" onclick="doLogin()">INITIALIZE SESSION →</button>
+      <div class="loading-bar" id="loginLoader"></div>
+      <div class="error-msg" id="loginError"></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div class="form-panel" id="registerPanel">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="regUsername" class="form-input" placeholder="agent_name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="regEmail" class="form-input" placeholder="you@nexus.ai" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password (min 6 chars)</label>
+        <input type="password" id="regPassword" class="form-input" placeholder="••••••••" />
+      </div>
+      <button class="submit-btn" id="registerBtn" onclick="doRegister()">CREATE ACCOUNT →</button>
+      <div class="loading-bar" id="registerLoader"></div>
+      <div class="error-msg" id="registerError"></div>
+      <div class="success-msg" id="registerSuccess"></div>
+    </div>
+
+    <div class="back-link">
+      <a href="/">← BACK TO NEXUS HOME</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.getElementById('loginPanel').classList.toggle('active', tab === 'login');
+  document.getElementById('registerPanel').classList.toggle('active', tab === 'register');
+  document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+  document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const loader = document.getElementById('loginLoader');
+  const err = document.getElementById('loginError');
+
+  if (!email || !password) { showErr(err, 'Please fill in all fields'); return; }
+
+  btn.disabled = true;
+  loader.style.display = 'block';
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = data.redirect;
+    } else {
+      showErr(err, data.message);
+    }
+  } catch(e) {
+    showErr(err, 'Connection error. Try again.');
+  } finally {
+    btn.disabled = false;
+    loader.style.display = 'none';
+  }
+}
+
+async function doRegister() {
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const btn = document.getElementById('registerBtn');
+  const loader = document.getElementById('registerLoader');
+  const err = document.getElementById('registerError');
+  const success = document.getElementById('registerSuccess');
+
+  if (!username || !email || !password) { showErr(err, 'All fields required'); return; }
+  if (password.length < 6) { showErr(err, 'Password must be 6+ characters'); return; }
+
+  btn.disabled = true;
+  loader.style.display = 'block';
+  err.style.display = 'none';
+  success.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, email, password})
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = data.redirect;
+    } else {
+      showErr(err, data.message);
+    }
+  } catch(e) {
+    showErr(err, 'Connection error. Try again.');
+  } finally {
+    btn.disabled = false;
+    loader.style.display = 'none';
+  }
+}
+
+function showErr(el, msg) {
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+
+// Enter key support
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('loginPanel').classList.contains('active')) doLogin();
+    else doRegister();
+  }
+});
+
+// Neural canvas
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+class Node {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random()-0.5)*0.3;
+    this.vy = (Math.random()-0.5)*0.3;
+    this.r = Math.random()*1.5+0.5;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if(this.x<0||this.x>canvas.width) this.vx*=-1;
+    if(this.y<0||this.y>canvas.height) this.vy*=-1;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,245,255,0.6)';
+    ctx.fill();
+  }
+}
+const nodes = Array.from({length:60},()=>new Node());
+function animate() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=0;i<nodes.length;i++) {
+    for(let j=i+1;j<nodes.length;j++) {
+      const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<130) {
+        ctx.strokeStyle=`rgba(0,245,255,${(1-d/130)*0.25})`;
+        ctx.lineWidth=0.5;
+        ctx.beginPath();
+        ctx.moveTo(nodes[i].x,nodes[i].y);
+        ctx.lineTo(nodes[j].x,nodes[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  nodes.forEach(n=>{n.update();n.draw();});
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>

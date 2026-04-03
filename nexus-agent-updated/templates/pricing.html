@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS — Upgrade Your Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { --cyan:#00f5ff; --green:#39ff14; --orange:#ff6b35; --purple:#b44fff; --dark:#020408; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--dark); color:#c8e6f0; font-family:'Sora',sans-serif; min-height:100vh; }
+body::after { content:''; position:fixed; top:0;left:0;right:0;bottom:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px); pointer-events:none; z-index:999; }
+
+nav { display:flex; align-items:center; justify-content:space-between; padding:20px 60px; border-bottom:1px solid rgba(0,245,255,0.08); }
+.logo { font-family:'Orbitron',monospace; font-size:1.2rem; font-weight:900; color:var(--cyan); letter-spacing:4px; text-decoration:none; }
+.back-btn { padding:8px 20px; border:1px solid rgba(0,245,255,0.2); color:var(--cyan); font-family:'Orbitron',monospace; font-size:0.65rem; letter-spacing:2px; text-decoration:none; }
+.back-btn:hover { background:rgba(0,245,255,0.05); }
+
+.page { max-width: 1100px; margin: 0 auto; padding: 80px 40px; }
+
+.page-label { font-family:'JetBrains Mono',monospace; font-size:0.7rem; letter-spacing:4px; color:var(--cyan); text-transform:uppercase; text-align:center; margin-bottom:16px; }
+.page-title { font-family:'Orbitron',monospace; font-size:2.8rem; font-weight:900; color:#fff; text-align:center; margin-bottom:12px; line-height:1.2; }
+.page-title span { color:var(--cyan); }
+.page-sub { text-align:center; color:rgba(200,230,240,0.5); font-size:1rem; margin-bottom:70px; }
+
+.plans-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+
+.plan-card {
+  background:rgba(5,13,20,0.8);
+  border:1px solid rgba(0,245,255,0.1);
+  padding:40px 32px;
+  position:relative;
+  overflow:hidden;
+  transition:all 0.3s;
+}
+.plan-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:3px;
+  opacity:0; transition:opacity 0.3s;
+}
+.plan-card.free::before { background:rgba(200,230,240,0.3); }
+.plan-card.pro::before { background:linear-gradient(90deg,var(--cyan),#0088ff); }
+.plan-card.enterprise::before { background:linear-gradient(90deg,var(--orange),var(--purple)); }
+.plan-card.pro { border-color:rgba(0,245,255,0.25); transform:scale(1.02); }
+.plan-card.pro::before { opacity:1; }
+.plan-card:hover { transform:translateY(-4px); border-color:rgba(0,245,255,0.25); }
+.plan-card.pro:hover { transform:scale(1.02) translateY(-4px); }
+
+.popular-badge {
+  position:absolute; top:16px; right:16px;
+  background:var(--cyan); color:var(--dark);
+  font-family:'Orbitron',monospace; font-size:0.55rem; font-weight:700; letter-spacing:2px;
+  padding:3px 10px;
+}
+
+.plan-name { font-family:'Orbitron',monospace; font-size:0.8rem; letter-spacing:3px; color:rgba(200,230,240,0.5); margin-bottom:16px; }
+.plan-price { font-family:'Orbitron',monospace; font-size:2.8rem; font-weight:900; color:#fff; margin-bottom:6px; }
+.plan-card.pro .plan-price { color:var(--cyan); text-shadow:0 0 20px rgba(0,245,255,0.3); }
+.plan-card.enterprise .plan-price { color:var(--orange); }
+.plan-period { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:rgba(200,230,240,0.3); margin-bottom:32px; }
+
+.plan-features { list-style:none; margin-bottom:36px; }
+.plan-features li {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid rgba(0,245,255,0.04);
+  font-size:0.85rem;
+  color:rgba(200,230,240,0.7);
+}
+.plan-features li::before { content:'✓'; color:var(--green); font-weight:700; font-size:0.8rem; flex-shrink:0; }
+
+.plan-btn {
+  width:100%;
+  padding:14px;
+  border:none;
+  font-family:'Orbitron',monospace;
+  font-size:0.75rem;
+  font-weight:700;
+  letter-spacing:2px;
+  cursor:pointer;
+  clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+  transition:all 0.2s;
+}
+.plan-btn-free { background:transparent; border:1px solid rgba(200,230,240,0.2); color:rgba(200,230,240,0.5); clip-path:none; }
+.plan-btn-pro { background:linear-gradient(135deg,var(--cyan),#0088ff); color:var(--dark); box-shadow:0 0 30px rgba(0,245,255,0.3); }
+.plan-btn-pro:hover { box-shadow:0 0 50px rgba(0,245,255,0.5); }
+.plan-btn-enterprise { background:linear-gradient(135deg,var(--orange),var(--purple)); color:#fff; }
+.plan-btn-enterprise:hover { box-shadow:0 0 40px rgba(255,107,53,0.4); }
+
+.error-box { background:rgba(255,50,50,0.1); border:1px solid rgba(255,50,50,0.3); color:#ff8888; padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:0.78rem; margin-top:40px; display:none; text-align:center; }
+
+.faq { margin-top:80px; }
+.faq-title { font-family:'Orbitron',monospace; font-size:1.2rem; color:#fff; margin-bottom:32px; text-align:center; letter-spacing:2px; }
+.faq-item { border-bottom:1px solid rgba(0,245,255,0.06); padding:24px 0; }
+.faq-q { font-size:0.9rem; color:rgba(200,230,240,0.8); margin-bottom:10px; }
+.faq-a { font-size:0.82rem; color:rgba(200,230,240,0.4); line-height:1.6; font-family:'JetBrains Mono',monospace; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">NEXUS</a>
+  <a href="/dashboard" class="back-btn">← DASHBOARD</a>
+</nav>
+
+<div class="page">
+  <div class="page-label">// SELECT YOUR PLAN</div>
+  <h1 class="page-title">Power Up Your <span>NEXUS Agent</span></h1>
+  <p class="page-sub">More runs. More power. Always yours to own.</p>
+
+  <div class="plans-grid">
+
+    <!-- FREE -->
+    <div class="plan-card free">
+      <div class="plan-name">FREE TIER</div>
+      <div class="plan-price">$0</div>
+      <div class="plan-period">FOREVER FREE</div>
+      <ul class="plan-features">
+        <li>15 agent runs per day</li>
+        <li>All 9 tools included</li>
+        <li>Web search + Wikipedia</li>
+        <li>Code execution</li>
+        <li>Weather & news</li>
+      </ul>
+      <a href="/dashboard" class="plan-btn plan-btn-free">CURRENT PLAN</a>
+    </div>
+
+    <!-- PRO -->
+    <div class="plan-card pro">
+      <div class="popular-badge">POPULAR</div>
+      <div class="plan-name">PRO AGENT</div>
+      <div class="plan-price">$9.99</div>
+      <div class="plan-period">PER MONTH · CANCEL ANYTIME</div>
+      <ul class="plan-features">
+        <li>200 agent runs per day</li>
+        <li>All 9 tools + priority</li>
+        <li>Faster processing</li>
+        <li>1GB file storage</li>
+        <li>Email support</li>
+      </ul>
+      <button class="plan-btn plan-btn-pro" onclick="checkout('pro')">UPGRADE TO PRO →</button>
+    </div>
+
+    <!-- ENTERPRISE -->
+    <div class="plan-card enterprise">
+      <div class="plan-name">ENTERPRISE</div>
+      <div class="plan-price">$29.99</div>
+      <div class="plan-period">PER MONTH · CANCEL ANYTIME</div>
+      <ul class="plan-features">
+        <li>Unlimited agent runs</li>
+        <li>Fastest processing</li>
+        <li>10GB file storage</li>
+        <li>API access included</li>
+        <li>24/7 Priority support</li>
+      </ul>
+      <button class="plan-btn plan-btn-enterprise" onclick="checkout('enterprise')">GET ENTERPRISE →</button>
+    </div>
+
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="faq">
+    <div class="faq-title">// FREQUENTLY ASKED</div>
+    <div class="faq-item">
+      <div class="faq-q">What counts as one "agent run"?</div>
+      <div class="faq-a">Each time you submit a task to NEXUS, that's one run. A run can involve multiple tool calls internally — you're only counted once per task.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I cancel anytime?</div>
+      <div class="faq-a">Yes. Cancel from your dashboard at any time. You'll keep access until the end of your billing period.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is my data private?</div>
+      <div class="faq-a">Yes. Your tasks and agent outputs are stored only on your server instance. This is your own deployment.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Do I need a credit card for the free plan?</div>
+      <div class="faq-a">No. The free plan requires no payment information at all. Sign up with just your email.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+async function checkout(plan) {
+  const errBox = document.getElementById('errorBox');
+  errBox.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({plan})
+    });
+    const data = await res.json();
+    if (data.success && data.url) {
+      window.location.href = data.url;
+    } else {
+      errBox.textContent = '⚠ ' + (data.message || 'Payment setup error. Check your Stripe configuration in .env file.');
+      errBox.style.display = 'block';
+    }
+  } catch(e) {
+    errBox.textContent = '⚠ Connection error: ' + e.message;
+    errBox.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

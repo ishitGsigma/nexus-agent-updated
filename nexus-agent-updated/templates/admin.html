@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS Admin Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+  .header { background: linear-gradient(135deg, #7c3aed, #2563eb); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 1.5rem; font-weight: 700; }
+  .badge { background: #fbbf24; color: #000; padding: 0.2rem 0.7rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: #1e1b4b; border: 1px solid #312e81; border-radius: 12px; padding: 1.2rem; text-align: center; }
+  .stat-card .num { font-size: 2rem; font-weight: 800; color: #a78bfa; }
+  .stat-card .label { font-size: 0.8rem; color: #94a3b8; margin-top: 0.3rem; }
+  .section { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .section h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: #c4b5fd; }
+  .action-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  input[type=email], select { background: #1f2937; border: 1px solid #374151; color: #e2e8f0; padding: 0.5rem 0.8rem; border-radius: 8px; font-size: 0.9rem; flex: 1; min-width: 200px; }
+  button { padding: 0.5rem 1.2rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: opacity 0.2s; }
+  button:hover { opacity: 0.85; }
+  .btn-purple { background: #7c3aed; color: #fff; }
+  .btn-red { background: #dc2626; color: #fff; }
+  .btn-blue { background: #2563eb; color: #fff; }
+  .toast { position: fixed; top: 1.5rem; right: 1.5rem; background: #10b981; color: #fff; padding: 0.8rem 1.5rem; border-radius: 10px; font-weight: 600; display: none; z-index: 999; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { text-align: left; padding: 0.6rem 1rem; background: #1f2937; color: #94a3b8; font-weight: 600; }
+  td { padding: 0.6rem 1rem; border-bottom: 1px solid #1f2937; }
+  tr:hover td { background: #1a2535; }
+  .plan-badge { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+  .plan-admin { background: #fbbf24; color: #000; }
+  .plan-enterprise { background: #7c3aed; color: #fff; }
+  .plan-pro { background: #2563eb; color: #fff; }
+  .plan-free { background: #374151; color: #9ca3af; }
+  .back-link { color: #a78bfa; text-decoration: none; font-size: 0.9rem; }
+  .back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🛡️ NEXUS Admin Panel <span class="badge">ADMIN</span></h1>
+  <div style="display:flex;gap:1rem;align-items:center;">
+    <span style="color:#c4b5fd;font-size:0.9rem;">{{ current_user.username }}</span>
+    <a href="/dashboard" class="back-link">← Dashboard</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="num" id="s-total">—</div><div class="label">Total Users</div></div>
+    <div class="stat-card"><div class="num" id="s-admin">—</div><div class="label">Admins</div></div>
+    <div class="stat-card"><div class="num" id="s-pro">—</div><div class="label">Pro Users</div></div>
+    <div class="stat-card"><div class="num" id="s-ent">—</div><div class="label">Enterprise</div></div>
+    <div class="stat-card"><div class="num" id="s-free">—</div><div class="label">Free Users</div></div>
+    <div class="stat-card"><div class="num" id="s-runs">—</div><div class="label">Total Runs</div></div>
+  </div>
+
+  <!-- Admin actions -->
+  <div class="section">
+    <h2>⚡ Quick Actions</h2>
+
+    <div class="action-row">
+      <input type="email" id="promoteEmail" placeholder="user@email.com">
+      <button class="btn-purple" onclick="promote()">👑 Make Admin</button>
+      <button class="btn-red" onclick="demote()">Remove Admin</button>
+    </div>
+
+    <div class="action-row">
+      <input type="email" id="planEmail" placeholder="user@email.com">
+      <select id="planSelect">
+        <option value="free">Free</option>
+        <option value="pro">Pro</option>
+        <option value="enterprise">Enterprise</option>
+      </select>
+      <button class="btn-blue" onclick="setPlan()">Set Plan</button>
+    </div>
+  </div>
+
+  <!-- Users table -->
+  <div class="section">
+    <h2>👥 All Users ({{ users|length }})</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>Username</th><th>Email</th><th>Plan</th>
+          <th>Today's Runs</th><th>Total Runs</th><th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.id }}</td>
+          <td>{{ u.username }}{% if u.is_admin %} 👑{% endif %}</td>
+          <td>{{ u.email }}</td>
+          <td>
+            {% if u.is_admin %}
+              <span class="plan-badge plan-admin">ADMIN ∞</span>
+            {% elif u.plan == 'enterprise' %}
+              <span class="plan-badge plan-enterprise">Enterprise</span>
+            {% elif u.plan == 'pro' %}
+              <span class="plan-badge plan-pro">Pro</span>
+            {% else %}
+              <span class="plan-badge plan-free">Free</span>
+            {% endif %}
+          </td>
+          <td>{{ u.runs_today }}</td>
+          <td>{{ u.total_runs }}</td>
+          <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = ok ? '#10b981' : '#ef4444';
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+async function apiCall(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+async function promote() {
+  const email = document.getElementById('promoteEmail').value.trim();
+  if (!email) return showToast('Enter an email', false);
+  const d = await apiCall('/api/admin/promote', {email});
+  showToast(d.message, d.success);
+  if (d.success) setTimeout(() => location.reload(), 1200);
+}
+
+async function demote() {
+  const email = document.getElementById('promoteEmail').value.trim();
+  if (!email) return showToast('Enter an email', false);
+  const d = await apiCall('/api/admin/demote', {email});
+  showToast(d.message, d.success);
+  if (d.success) setTimeout(() => location.reload(), 1200);
+}
+
+async function setPlan() {
+  const email = document.getElementById('planEmail').value.trim();
+  const plan = document.getElementById('planSelect').value;
+  if (!email) return showToast('Enter an email', false);
+  const d = await apiCall('/api/admin/set-plan', {email, plan});
+  showToast(d.message, d.success);
+  if (d.success) setTimeout(() => location.reload(), 1200);
+}
+
+// Load stats
+fetch('/api/admin/stats').then(r=>r.json()).then(d => {
+  document.getElementById('s-total').textContent = d.total_users;
+  document.getElementById('s-admin').textContent = d.admin_users;
+  document.getElementById('s-pro').textContent = d.pro_users;
+  document.getElementById('s-ent').textContent = d.enterprise_users;
+  document.getElementById('s-free').textContent = d.free_users;
+  document.getElementById('s-runs').textContent = d.total_runs;
+});
+</script>
+</body>
+</html>
